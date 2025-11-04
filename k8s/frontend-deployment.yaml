@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: <frontend-image-placeholder>
+        image: image: us-central1-docker.pkg.dev/amiable-archive-473111-d4/my-repo/notes-frontend:latest
         ports:
         - containerPort: 3000
