@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: image: us-central1-docker.pkg.dev/amiable-archive-473111-d4/my-repo/notes-backend:latest
+        image: us-central1-docker.pkg.dev/amiable-archive-473111-d4/my-repo/notes-backend:latest
         ports:
-        - containerPort: 8080
+        - containerPort: 3000
 
