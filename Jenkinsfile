@@ -9,6 +9,7 @@ pipeline {
         FRONTEND_IMG = "${ARTIFACT_HOST}/${PROJECT_ID}/${REPO}/notes-frontend"
         BACKEND_IMG  = "${ARTIFACT_HOST}/${PROJECT_ID}/${REPO}/notes-backend"
         K8S_NAMESPACE = "default"
+        TEMP_DIR = "/tmp"
     }
 
     stages {
@@ -20,11 +21,11 @@ pipeline {
 
         stage('Authenticate gcloud') {
             steps {
-                bat '''
-                echo Using attached VM service account...
-                gcloud config set project %PROJECT_ID%
+                sh '''
+                echo "Using attached VM service account..."
+                gcloud config set project $PROJECT_ID
                 gcloud auth list
-                gcloud auth configure-docker %REGION%-docker.pkg.dev --quiet
+                gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
                 '''
             }
         }
@@ -32,11 +33,11 @@ pipeline {
         stage('Build & Push Frontend') {
             steps {
                 dir('frontend') {
-                    bat '''
-                    set IMAGE_TAG=%FRONTEND_IMG%:%BUILD_NUMBER%
-                    docker build -t %IMAGE_TAG% .
-                    docker push %IMAGE_TAG%
-                    echo %IMAGE_TAG% > %TEMP%\\frontend_image
+                    sh '''
+                    IMAGE_TAG=$FRONTEND_IMG:$BUILD_NUMBER
+                    docker build -t $IMAGE_TAG .
+                    docker push $IMAGE_TAG
+                    echo $IMAGE_TAG > $TEMP_DIR/frontend_image
                     '''
                 }
             }
@@ -45,11 +46,11 @@ pipeline {
         stage('Build & Push Backend') {
             steps {
                 dir('backend') {
-                    bat '''
-                    set IMAGE_TAG=%BACKEND_IMG%:%BUILD_NUMBER%
-                    docker build -t %IMAGE_TAG% .
-                    docker push %IMAGE_TAG%
-                    echo %IMAGE_TAG% > %TEMP%\\backend_image
+                    sh '''
+                    IMAGE_TAG=$BACKEND_IMG:$BUILD_NUMBER
+                    docker build -t $IMAGE_TAG .
+                    docker push $IMAGE_TAG
+                    echo $IMAGE_TAG > $TEMP_DIR/backend_image
                     '''
                 }
             }
@@ -57,13 +58,14 @@ pipeline {
 
         stage('Deploy to GKE') {
             steps {
-                bat '''
-                gcloud container clusters get-credentials notes-cluster --zone=%ZONE% --project=%PROJECT_ID%
-                set /p FRONT_IMG=<%TEMP%\\frontend_image
-                set /p BACK_IMG=<%TEMP%\\backend_image
+                sh '''
+                gcloud container clusters get-credentials notes-cluster --zone=$ZONE --project=$PROJECT_ID
 
-                kubectl set image deployment/frontend frontend=%FRONT_IMG% --namespace=%K8S_NAMESPACE% || exit 0
-                kubectl set image deployment/backend backend=%BACK_IMG% --namespace=%K8S_NAMESPACE% || exit 0
+                FRONT_IMG=$(cat $TEMP_DIR/frontend_image)
+                BACK_IMG=$(cat $TEMP_DIR/backend_image)
+
+                kubectl set image deployment/frontend frontend=$FRONT_IMG --namespace=$K8S_NAMESPACE || true
+                kubectl set image deployment/backend backend=$BACK_IMG --namespace=$K8S_NAMESPACE || true
 
                 kubectl apply -f k8s/configmap.yaml
                 kubectl apply -f k8s/secret.yaml
@@ -71,10 +73,10 @@ pipeline {
                 kubectl apply -f k8s/service-backend.yaml
                 kubectl apply -f k8s/frontend-deployment.yaml
                 kubectl apply -f k8s/service-frontend.yaml
-                kubectl apply -f k8s/ingress.yaml || exit 0
+                kubectl apply -f k8s/ingress.yaml || true
 
-                kubectl rollout status deployment/frontend --namespace=%K8S_NAMESPACE% --timeout=120s
-                kubectl rollout status deployment/backend --namespace=%K8S_NAMESPACE% --timeout=120s
+                kubectl rollout status deployment/frontend --namespace=$K8S_NAMESPACE --timeout=120s
+                kubectl rollout status deployment/backend --namespace=$K8S_NAMESPACE --timeout=120s
                 '''
             }
         }
