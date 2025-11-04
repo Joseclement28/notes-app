@@ -13,7 +13,7 @@ spec:
         app: frontend
     spec:
       containers:
-        - name: frontend
-          image: placeholder-frontend-image
-          ports:
-            - containerPort: 8080
+      - name: frontend
+        image: <frontend-image-placeholder>
+        ports:
+        - containerPort: 3000

@@ -3,5 +3,6 @@ kind: ConfigMap
 metadata:
   name: notes-config
 data:
-  EXAMPLE_VAR: "example"
+  APP_ENV: "production"
+
 

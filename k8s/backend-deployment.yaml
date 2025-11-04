@@ -13,7 +13,8 @@ spec:
         app: backend
     spec:
       containers:
-        - name: backend
-          image: placeholder-backend-image
-          ports:
-            - containerPort: 5000
+      - name: backend
+        image: <backend-image-placeholder>
+        ports:
+        - containerPort: 8080
+

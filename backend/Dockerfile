@@ -1,8 +1,8 @@
-# Use Python for backend
-FROM python:3.11
-
+FROM node:18
 WORKDIR /app
+COPY package*.json ./
+RUN npm install
 COPY . .
-RUN pip install -r requirements.txt
+EXPOSE 8080
+CMD ["node", "src/app.js"]
 
-CMD ["python", "app.py"]

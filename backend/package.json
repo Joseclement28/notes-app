@@ -1,0 +1,11 @@
+{
+  "name": "notes-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
